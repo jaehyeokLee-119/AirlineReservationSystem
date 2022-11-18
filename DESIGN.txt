@@ -1,0 +1,18 @@
+Input : name, source, destination, date.
+ example) name1, y, g, 22 
+output: name, reservation number (or id), flight schedule with flight path. 
+ example 1) name1, 1, y(10:30am, 22)-b(2:00pm, 22)-g(9:00pm, 22)
+
+
+reservation record: rb-tree (Red Black Tree)
+    key: reservation number or id
+
+Flight paths: Graph data structure with adjacency list
+    26 cities (city1, city2, city3, ..., city26)
+    Every city generate 10 direct paths to other cities
+    each edge has value of 'traveling time'
+
+Execution: 
+    Insertion(At least 10) and Deletion(At least 5) of reservation (to rb-tree)
+
+    Print rb-tree 
