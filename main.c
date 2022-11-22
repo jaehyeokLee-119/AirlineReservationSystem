@@ -338,6 +338,8 @@ int main() {
     }
     // -1?? ????
 
+    int selected[26] = { 0 };
+
     for (int i = 0; i < 26; i++) {
         for (int j = 0; j < 10; j++) {
 
@@ -345,24 +347,29 @@ int main() {
             // 
             // i: 두 지점(출발지, 도착지) 중 하나
             // j: adjaciencies[i]에서 몇 번째로 저장될지
+            if (adjacencies[i][j] != -1) // 앞 부분에 다른 도시로부터 채워져있는 부분은 건너뛰기
+                    continue;
+                    
             while(1) {
                 int tmp = rand()%26;
                 int sign = 0;
 
-                if (adjacencies[i][j] != -1) // 앞 부분에 다른 도시로부터 채워져있는 부분은 건너뛰기
-                    break;
+                
                 if (i == tmp)   // (출발지==도착지) 이면 다시 tmp를 랜덤하게 배정해서 시행
                     continue;
 
                 for (int jj = 0; jj < 10; jj++) {
                     if (adjacencies[i][jj] == tmp) {// || adjacencies[tmp][jj] == i) {
-                        // 이미 i 도시에서 tmp로의 edge가 있는 경우
+                        // 이미 i - tmp의 edge가 있는 경우
                         // || 이미 tmp 도시에서 i로의 edge가 있는 경우
                         sign = 1;
                         break;
                     }
                 }
 
+                if (selected[tmp] >= 10) {
+                    continue;
+                }
                 // select random city 'tmp' (0~26) 
                 // 1. i == tmp인지 검사
                 //      true -> tmp를 다시 배정
@@ -373,21 +380,48 @@ int main() {
                 //      adjacencies[tmp]에 i 추가
 
                 if (sign == 0) {
+                    int complete = 0;
                     for (int k = 0; k < 10; k++) {
                         if (adjacencies[tmp][k] == -1) {
+                            complete = 1;
                             adjacencies[i][j] = tmp;
                             adjacencies[tmp][k] = i;
+
+                            selected[i]++;
+                            selected[tmp]++;
+
+                            /*
+                            //printf("adjacencies[%c][%d] = %c, adjacencies[%c][%d] = %c\n", i+'a', j, tmp+'a', tmp+'a', k, i+'a');
+                            printf("\t selected[%c] = %d, selected[%c] = %d\n", i+'a', selected[i], tmp+'a', selected[tmp]);
+                            
+                            for (int a = 0; a < 26; a++) {
+                                printf(" [%c] ", a+'a');
+                            }
+                            puts("");
+                            for (int a = 0; a < 26; a++) {
+                                printf(" %3d ", selected[a]);
+                            }*/
                             break;
                         }
                     }
-                    break;
+                    if (complete == 0)
+                        continue;
+                    else
+                        break;
                 }
 
             }
+            printf("[%c]-", i+'a');
+            for (int j = 0; j < 10; j++) {
+                printf("  %c", adjacencies[i][j]+'a');
+            }
+            puts("");
+            
+
         }
     }
 
-for (int i = 0; i < 26; i++) {
+    for (int i = 0; i < 26; i++) {
         for (int j = 0; j < 10; j++) {
             while(1) {
                 int tmp = rand()%26;
@@ -402,9 +436,6 @@ for (int i = 0; i < 26; i++) {
                     adjacencies[i][j] = tmp;
                     break;
                 }
-            }
-            for (int ii = 0; i < 26; i++) {
-                
             }
         }
     }
