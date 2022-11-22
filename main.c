@@ -292,7 +292,7 @@ rbt_node* rbt_init() {
 }
 
 
-void insert(link_node** ptr_homePtr, city_name value) {
+void adjacency_insert(link_node** ptr_homePtr, city_name value) {
     link_node* new;
     new = (link_node*)malloc(sizeof(link_node));
     new->name = value;
@@ -329,19 +329,66 @@ int main() {
     
 	srand(time(NULL));
     city_name adjacencies[26][10] = {0};
-    // adjacencies에는 a-z를 0-25로 표현 
+    // initialize adjacency list to all values -1
+    // i: a~z - 0~25 
     for (int i = 0; i < 26; i++) {
         for (int j = 0; j < 10; j++) {
             adjacencies[i][j] = -1;
         }
     }
-    // -1로 초기화
+    // -1?? ????
 
     for (int i = 0; i < 26; i++) {
         for (int j = 0; j < 10; j++) {
 
-            // (i, tmp) 쌍이 이미 있는지 확인해야 함
+            // (i, tmp) ???? ??? ????? ?????? ??
             // 
+            // i: 두 지점(출발지, 도착지) 중 하나
+            // j: adjaciencies[i]에서 몇 번째로 저장될지
+            while(1) {
+                int tmp = rand()%26;
+                int sign = 0;
+
+                if (adjacencies[i][j] != -1) // 앞 부분에 다른 도시로부터 채워져있는 부분은 건너뛰기
+                    break;
+                if (i == tmp)   // (출발지==도착지) 이면 다시 tmp를 랜덤하게 배정해서 시행
+                    continue;
+
+                for (int jj = 0; jj < 10; jj++) {
+                    if (adjacencies[i][jj] == tmp) {// || adjacencies[tmp][jj] == i) {
+                        // 이미 i 도시에서 tmp로의 edge가 있는 경우
+                        // || 이미 tmp 도시에서 i로의 edge가 있는 경우
+                        sign = 1;
+                        break;
+                    }
+                }
+
+                // select random city 'tmp' (0~26) 
+                // 1. i == tmp인지 검사
+                //      true -> tmp를 다시 배정
+                // 2. adjacencies[i]에 tmp가 있는지 검사
+                // 3. adjacencies[tmp]에 i가 있는지 검사
+                // 모두 통과 시
+                //      adjacencies[i][j] = tmp
+                //      adjacencies[tmp]에 i 추가
+
+                if (sign == 0) {
+                    for (int k = 0; k < 10; k++) {
+                        if (adjacencies[tmp][k] == -1) {
+                            adjacencies[i][j] = tmp;
+                            adjacencies[tmp][k] = i;
+                            break;
+                        }
+                    }
+                    break;
+                }
+
+            }
+        }
+    }
+
+for (int i = 0; i < 26; i++) {
+        for (int j = 0; j < 10; j++) {
             while(1) {
                 int tmp = rand()%26;
                 int sign = 0;
@@ -355,6 +402,9 @@ int main() {
                     adjacencies[i][j] = tmp;
                     break;
                 }
+            }
+            for (int ii = 0; i < 26; i++) {
+                
             }
         }
     }

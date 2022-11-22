@@ -3,16 +3,39 @@ Input : name, source, destination, date.
 output: name, reservation number (or id), flight schedule with flight path. 
  example 1) name1, 1, y(10:30am, 22)-b(2:00pm, 22)-g(9:00pm, 22)
 
+It's OK to set reservation maker's names just 'name1', 'name2', 'name3', ...
 
 reservation record: rb-tree (Red Black Tree)
     key: reservation number or id
 
 Flight paths: Graph data structure with adjacency list
-    26 cities (city1, city2, city3, ..., city26)
+    26 cities (a to z)
     Every city generate 10 direct paths to other cities
-    each edge has value of 'traveling time'
+    each edge has value of 'flight time'
+
+    Make a schedule of one day flight departures for all the cities
+    flight time is 1 (1 hour)
 
 Execution: 
     Insertion(At least 10) and Deletion(At least 5) of reservation (to rb-tree)
+    Print rb-tree before&after each insertion/deletion
+    
+Document file:
+    1) Introduction
+    2) User interface description
+    3) Conclusions
 
-    Print rb-tree 
+Evaluation:
+    1) 60%, Program quality
+    2) 20%, Diversity of execution (testing) examples
+    3) 10%, Modularity and comments within program
+    4) 10%, Document file (system description) quality
+
+So,
+Functions to be implemented are..
+    1. RBT (insertion, deletion, print)
+    2. Graph with adjacency list (insertion, path search)
+
+    < main >
+    3. Build flight path graph (10 paths to each city)
+    4. Reservation Insert(10)/delete(5) 
