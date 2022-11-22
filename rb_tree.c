@@ -99,7 +99,7 @@ void insert_fixup(node** root, node* z) {
     (*root)->color = BLACK;
 }
 
-node* insert(node** root, node* z) {
+node* rbt_insert(node** root, node* z) {
     node* y = nil;
     node* x = (*root);
     while (x != nil) {
@@ -197,7 +197,7 @@ void delete_fixup(node** root, node* x) {
     x->color = BLACK;
 }
 
-void delete(node** root, node* z){
+void rbt_delete(node** root, node* z){
     node* y = z;
     node* x;
     color_t ycolor = y->color;
@@ -255,7 +255,7 @@ int nearest_neighbor(node** root, int val) {
     }
 }
 
-node* search(node** root, int val) {
+node* rbt_search(node** root, int val) {
     node* current = (*root);
     while(1) {
         if (val == current->key) {
@@ -302,7 +302,7 @@ void print_inorder(node* node) {
     printf("---------------------------------------------------------\n");
 }
 
-node* init_rbt() {
+node* rbt_init() {
     node* nil = create_node(-1);
     nil->color = BLACK;
     return nil;

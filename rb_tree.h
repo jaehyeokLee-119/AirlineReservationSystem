@@ -13,7 +13,7 @@ typedef struct node {
 } node;
 
 void print_inorder(node* node);
-node* init_rbt();
+node* rbt_init();
 node* create_node(int key);
-node* insert(node** root, node* z);
-void delete(node** root, node* z);
+node* rbt_insert(node** root, node* z);
+void rbt_delete(node** root, node* z);
