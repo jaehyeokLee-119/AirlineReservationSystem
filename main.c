@@ -331,22 +331,31 @@ int main() {
     city_name adjacencies[26][10] = {0};
     // adjacencies에는 a-z를 0-25로 표현 
     for (int i = 0; i < 26; i++) {
-        printf("%c -", i+'a');
         for (int j = 0; j < 10; j++) {
             adjacencies[i][j] = -1;
-            printf("  %c", adjacencies[i][j]+'a');
         }
-        puts("");
     }
     // -1로 초기화
 
     for (int i = 0; i < 26; i++) {
         for (int j = 0; j < 10; j++) {
-            int tmp = rand()%26;
 
             // (i, tmp) 쌍이 이미 있는지 확인해야 함
             // 
-            adjacencies[i][j] = tmp;
+            while(1) {
+                int tmp = rand()%26;
+                int sign = 0;
+                for (int jj = 0; jj < 10; jj++) {
+                    if (adjacencies[i][jj] == tmp || adjacencies[tmp][jj] == i) {
+                        sign = 1;
+                        break;
+                    }
+                }
+                if (sign == 0) {
+                    adjacencies[i][j] = tmp;
+                    break;
+                }
+            }
         }
     }
 
