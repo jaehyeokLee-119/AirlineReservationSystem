@@ -8,7 +8,9 @@ typedef char city_name;
 
 typedef struct rbt_node {
     color_t color;
-    int key;
+    int rid;
+    link_node* paths;
+    int date;
     struct rbt_node *parent;
     struct rbt_node *left;
     struct rbt_node *right;
@@ -25,7 +27,7 @@ rbt_node* create_node(int key) {
     rbt_node* new = (rbt_node*) malloc(sizeof(rbt_node));
     
     new->color = RED;
-    new->key = key;
+    new->rid = key;
     new->parent = NULL;
     new->left = NULL;
     new->right = NULL;
@@ -119,7 +121,7 @@ rbt_node* rbt_insert(rbt_node** root, rbt_node* z) {
     rbt_node* x = (*root);
     while (x != nil) {
         y = x;
-        if (z->key < x->key) 
+        if (z->rid < x->rid) 
             x = x->left;
         else
             x = x->right;
@@ -127,7 +129,7 @@ rbt_node* rbt_insert(rbt_node** root, rbt_node* z) {
     z->parent = y;
     if (y == nil) 
         (*root) = z;
-    else if (z->key < y->key)
+    else if (z->rid < y->rid)
         y->left = z;
     else 
         y->right = z;
@@ -234,7 +236,7 @@ void rbt_delete(rbt_node** root, rbt_node* z){
         }
     }
     if (y != z) {
-        z->key = y->key;
+        z->rid = y->rid;
     }
     if (y->color == BLACK) {
         delete_fixup(root, x);
@@ -243,10 +245,10 @@ void rbt_delete(rbt_node** root, rbt_node* z){
 rbt_node* rbt_search(rbt_node** root, int val) {
     rbt_node* current = (*root);
     while(1) {
-        if (val == current->key) {
+        if (val == current->rid) {
             return current;
         } else {
-            if (val > current->key) {
+            if (val > current->rid) {
                 current = current->right;
             } else {
                 current = current->left;
@@ -261,13 +263,13 @@ void recurrent_print(rbt_node* node, int tabs) {
     if (node != nil) {
         recurrent_print(node->right, tabs+1);
         for(int i = 0; i < tabs-1; i++) printf("%13s"," ");
-        printf("    \033[0;30m%2d--\033[0m", node->parent->key);
+        printf("    \033[0;30m%2d--\033[0m", node->parent->rid);
         if (node->color == RED) 
             //printf("(R %2d) ", node->key);
-            printf("\033[0;31m[%2d]\033[0m", node->key);
+            printf("\033[0;31m[%2d]\033[0m", node->rid);
         else 
             //printf("(B %2d) ", node->key);
-            printf("\033[0;37m[%2d]\033[0m", node->key);
+            printf("\033[0;37m[%2d]\033[0m", node->rid);
         puts("");
         recurrent_print(node->left, tabs+1);
     }
@@ -277,9 +279,9 @@ void print_inorder(rbt_node* node) {
     if (node != nil) {
         recurrent_print(node->right, 1);
         if (node->color == RED) 
-            printf("\033[0;31m[%2d]\033[0m", node->key);
+            printf("\033[0;31m[%2d]\033[0m", node->rid);
         else 
-            printf("[%2d]", node->key);
+            printf("[%2d]", node->rid);
         puts("");
         recurrent_print(node->left, 1);
     }
@@ -291,6 +293,51 @@ rbt_node* rbt_init() {
     return nil;
 }
 
+
+int alphabet_to_int(city_name alphabet) {
+    return (int) (alphabet-'a');
+}
+char* int_to_timeString(int time) {
+    int hour = time/60;
+    int min = time%60;
+    int is_pm = (hour/12);
+    hour = hour%12;
+    char input[8];
+    char* to_ret = NULL;
+
+    if (hour == 0) {
+        hour = 12;
+    }
+    input[0] = hour/10+'0';
+    input[1] = hour%10+'0';
+    input[2] = ':';
+    input[3] = min/10+'0';
+    input[4] = min%10+'0';
+
+    if (is_pm >= 1) {
+        input[5] = 'p';
+    } else {
+        input[5] = 'a';
+    }
+    input[6] = 'm';
+
+    int start_point;
+    if (hour<10) {
+        to_ret = (char*)malloc(sizeof(char)*(7));
+        start_point = 1;
+    }
+    else {
+        to_ret = (char*)malloc(sizeof(char)*(8));
+        start_point = 0;
+    }
+
+    for(int i = 0; start_point < 7; i++) {
+        to_ret[i] = input[start_point];
+        start_point++;
+    }
+    to_ret[start_point] = '\0';
+    return to_ret;
+}
 
 void adjacency_insert(link_node** ptr_homePtr, city_name value) {
     link_node* new;
@@ -310,26 +357,16 @@ void adjacency_insert(link_node** ptr_homePtr, city_name value) {
     }
 }
 
-int alphabet_to_int(city_name alphabet) {
-    return (int) (alphabet-'a');
-}
-
-void insert(link_node** ptr_homePtr, city_name value) {
-    link_node* new;
-    new = (link_node*)malloc(sizeof(link_node));
-    new->name = value;
-    new->nextPtr = NULL;
-    link_node* current;
-    if (*ptr_homePtr == NULL) {
-        *ptr_homePtr = new;
-        return;
-    } else {
-        current = *ptr_homePtr;
-        while(current->nextPtr) {
-            current = current->nextPtr;
+int graph_search(link_node* graph[26], city_name src, city_name dst) {
+    link_node *tmp = graph[src];
+    while(tmp) {
+        if (tmp->name == dst) {
+            return 1;
+            break;
         }
-        current->nextPtr = new;
+        tmp = tmp->nextPtr;
     }
+    return 0;
 }
 
 void initialize_adjacencies(link_node* graph[26]) {
@@ -421,26 +458,38 @@ void initialize_adjacencies(link_node* graph[26]) {
 
     for (int i = 0; i < 26; i++) {
         for (int j = 0; j < 10; j++) {
-            insert(&graph[i], adjacencies[i][j]);
+            adjacency_insert(&graph[i], adjacencies[i][j]);
         }
     }
 }
+
+link_node* recursive_pathfinding(city_name src, city_name dst, int time, link_node* pasts, link_node* graph[26], int schedule[26][26]) {
+
+}
+link_node* init_pathfinding(city_name src, city_name dst, link_node* graph[26], int schedule[26][26]) {
+    int time = 0;
+    link_node* past = NULL;
+    adjacency_insert(past, src);
+
+}
+
 int main() {
     rbt_node* root = rbt_init();
     nil = root;
 
     int reservation_num = 0;
-
+    /*
     rbt_node* n = create_node(5);
     rbt_insert(&root, n);
     print_inorder(root);
+    */
 
 	link_node* graph[26] = {NULL};
     
 	srand(time(NULL));
-
     initialize_adjacencies(graph);
 
+    /* <adjacency list printing>
     for(int i = 0; i < 26; i++) {
         link_node *a = graph[i];
         printf("%c: ", i+'a');
@@ -450,5 +499,68 @@ int main() {
         }
         puts("");
     }
+    */
+
+    /* 
+    flight paths are in 'graph[26][10]'
+        every pathes from(to) 'i' to(from) 'j'
+            graph['i'][0~9] = 'j'
+    
+    the depart time of each one-way path is stored in 
+        departure_schedule[i][j]
+        it means
+            the departure time from a city 'i' to a city 'j' is
+                departure_schedule[i][j]
+        it represents the departure time as an int number [0,1435], with the unit of minute (steps 5) 
+
+        if there is no flight schedule 'i' to 'j', departure_schedule[i][j] to be -1
+    */
+    
+    // Creating Departure schedule 
+    int departure_schedule[26][26] = {0};
+    for (int i = 0; i < 26; i++) {
+        for(int j = 0; j < 26; j++) {
+            if (graph_search(graph, i, j) == 1)
+                departure_schedule[i][j] = rand()%288 * 5;
+            else 
+                departure_schedule[i][j] = -1;
+        }
+    }
+
+    /* <Departure schedule Printing>
+    for (int i = 0; i < 26; i++) {
+        printf("<%c>\n", i+'a');
+        for(int j = 0; j < 26; j++) {
+            int tmp = departure_schedule[i][j];
+            if (tmp != -1)
+                printf("<%c>: %s|", j+'a',int_to_timeString(tmp));
+            else
+                printf(" - |");
+        }
+        puts("");
+    }
+    */ 
+
+
+    // -------------- //
+    // Execution Part //
+    // -------------- //
+    char r_name[6];
+    char r_src;
+    char r_dst;
+    int r_date;
+
+    // input 입력받기
+    scanf("%c%c%c%c%c, %c, %c, %d", &r_name[0], &r_name[1], &r_name[2], &r_name[3], &r_name[4], &r_src, &r_dst, &r_date);
+    r_name[5] = '\0';
+    printf("name: %s\nsrc: %c\ndst: %c\ndate: %d\n", r_name, r_src, r_dst, r_date);
+    
+
+    // 비행스케쥴 상의 길찾기 알고리즘 (한 번의 이동에 1시간이 소요됨)
+    // 리턴하는 것은 도시 이름만 순서대로 리턴하면 시간은 채워넣으면 됨
+
+
+
+
 
 }
