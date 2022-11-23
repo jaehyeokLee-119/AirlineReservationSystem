@@ -314,7 +314,101 @@ int alphabet_to_int(city_name alphabet) {
     return (int) (alphabet-'a');
 }
 
+void initialize_adjacencies(link_node* graph[26]) {
+    city_name adjacencies[26][10] = {0};
+    static int loop_num = 0;
+    // initialize adjacency list to all values -1
+    // i: a~z - 0~25 
+    for (int i = 0; i < 26; i++) {
+        for (int j = 0; j < 10; j++) {
+            adjacencies[i][j] = -1;
+        }
+    }
 
+    int selected[26] = { 0 };
+    int min_selected = 0;
+
+    for (int i = 0; i < 26; i++) {
+        for (int j = 0; j < 10; j++) {
+            if (adjacencies[i][j] != -1) 
+                    continue;
+                    
+            int tmp;
+            while(1) {
+                loop_num++;
+
+                if (min_selected == 10) {
+                    break;
+                }
+                tmp = rand()%26;
+                
+                int sign = 0;
+
+                if (i == tmp) {  // avoid self-edge
+                    //printf("self, i,tmp = %d\n", i);
+                    continue;
+                }
+
+                if (selected[tmp] != min_selected) { // min_selected probing
+                    int tmp_min = 99;
+                    for(int ii = 0; ii < 26; ii++) {
+                        if (tmp_min > selected[ii] && ii != i) {
+                            tmp_min = selected[ii];
+                        }
+                    }
+                    if (tmp_min > selected[i]) {
+                        min_selected += 1;
+                        continue;
+                    }       // dealing with the case of 'i' is min_selected city 
+                    continue;
+                    // only select 'least selected cities'
+                } 
+
+                for (int jj = 0; jj < 10; jj++) { // avoid already set path to same city
+                    if (adjacencies[i][jj] == tmp) {
+                        sign = 1;
+                        break;
+                    }
+                }
+
+                if (sign == 0) {
+                    int complete = 0;
+                    // search empty path slot of target city
+                    for (int k = 0; k < 10; k++) {
+                        if (adjacencies[tmp][k] == -1) { // if there is an empty path slot in target city
+                            complete = 1;
+                            adjacencies[i][j] = tmp;
+                            adjacencies[tmp][k] = i;
+                            // fill both cities entry
+                            selected[i]++;
+                            selected[tmp]++;
+                            // raise select count by 1
+                            break;
+                        }
+                    }
+                    if (complete == 0)
+                        continue;
+                    else // if there isn't an empty slot in target city
+                        break;
+                }
+            }
+            min_selected = 99; // re-calculate min_selected
+            for(int a = 0; a < 26; a++) {
+                if (min_selected > selected[a])
+                    min_selected = selected[a]; 
+            }
+        }
+    }
+
+
+    for (int i = 0; i < 26; i++) {
+        printf("%c -", i+'a');
+        for (int j = 0; j < 10; j++) {
+            printf("  %c", adjacencies[i][j]+'a');
+        }
+        puts("");
+    }
+}
 int main() {
     rbt_node* root = rbt_init();
     nil = root;
@@ -328,126 +422,7 @@ int main() {
 	link_node* graph[26] = {NULL};
     
 	srand(time(NULL));
-    city_name adjacencies[26][10] = {0};
-    // initialize adjacency list to all values -1
-    // i: a~z - 0~25 
-    for (int i = 0; i < 26; i++) {
-        for (int j = 0; j < 10; j++) {
-            adjacencies[i][j] = -1;
-        }
-    }
-    // -1?? ????
 
-    int selected[26] = { 0 };
-
-    for (int i = 0; i < 26; i++) {
-        for (int j = 0; j < 10; j++) {
-
-            // (i, tmp) ???? ??? ????? ?????? ??
-            // 
-            // i: 두 지점(출발지, 도착지) 중 하나
-            // j: adjaciencies[i]에서 몇 번째로 저장될지
-            if (adjacencies[i][j] != -1) // 앞 부분에 다른 도시로부터 채워져있는 부분은 건너뛰기
-                    continue;
-                    
-            while(1) {
-                int tmp = rand()%26;
-                int sign = 0;
-
-                
-                if (i == tmp)   // (출발지==도착지) 이면 다시 tmp를 랜덤하게 배정해서 시행
-                    continue;
-
-                for (int jj = 0; jj < 10; jj++) {
-                    if (adjacencies[i][jj] == tmp) {// || adjacencies[tmp][jj] == i) {
-                        // 이미 i - tmp의 edge가 있는 경우
-                        // || 이미 tmp 도시에서 i로의 edge가 있는 경우
-                        sign = 1;
-                        break;
-                    }
-                }
-
-                if (selected[tmp] >= 10) {
-                    continue;
-                }
-                // select random city 'tmp' (0~26) 
-                // 1. i == tmp인지 검사
-                //      true -> tmp를 다시 배정
-                // 2. adjacencies[i]에 tmp가 있는지 검사
-                // 3. adjacencies[tmp]에 i가 있는지 검사
-                // 모두 통과 시
-                //      adjacencies[i][j] = tmp
-                //      adjacencies[tmp]에 i 추가
-
-                if (sign == 0) {
-                    int complete = 0;
-                    for (int k = 0; k < 10; k++) {
-                        if (adjacencies[tmp][k] == -1) {
-                            complete = 1;
-                            adjacencies[i][j] = tmp;
-                            adjacencies[tmp][k] = i;
-
-                            selected[i]++;
-                            selected[tmp]++;
-
-                            /*
-                            //printf("adjacencies[%c][%d] = %c, adjacencies[%c][%d] = %c\n", i+'a', j, tmp+'a', tmp+'a', k, i+'a');
-                            printf("\t selected[%c] = %d, selected[%c] = %d\n", i+'a', selected[i], tmp+'a', selected[tmp]);
-                            
-                            for (int a = 0; a < 26; a++) {
-                                printf(" [%c] ", a+'a');
-                            }
-                            puts("");
-                            for (int a = 0; a < 26; a++) {
-                                printf(" %3d ", selected[a]);
-                            }*/
-                            break;
-                        }
-                    }
-                    if (complete == 0)
-                        continue;
-                    else
-                        break;
-                }
-
-            }
-            printf("[%c]-", i+'a');
-            for (int j = 0; j < 10; j++) {
-                printf("  %c", adjacencies[i][j]+'a');
-            }
-            puts("");
-            
-
-        }
-    }
-
-    for (int i = 0; i < 26; i++) {
-        for (int j = 0; j < 10; j++) {
-            while(1) {
-                int tmp = rand()%26;
-                int sign = 0;
-                for (int jj = 0; jj < 10; jj++) {
-                    if (adjacencies[i][jj] == tmp || adjacencies[tmp][jj] == i) {
-                        sign = 1;
-                        break;
-                    }
-                }
-                if (sign == 0) {
-                    adjacencies[i][j] = tmp;
-                    break;
-                }
-            }
-        }
-    }
-
-    for (int i = 0; i < 26; i++) {
-        printf("%c -", i+'a');
-        for (int j = 0; j < 10; j++) {
-            printf("  %c", adjacencies[i][j]+'a');
-        }
-        puts("");
-    }
-
-
+    initialize_adjacencies(graph);
 
 }
