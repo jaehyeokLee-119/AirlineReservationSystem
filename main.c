@@ -314,6 +314,24 @@ int alphabet_to_int(city_name alphabet) {
     return (int) (alphabet-'a');
 }
 
+void insert(link_node** ptr_homePtr, city_name value) {
+    link_node* new;
+    new = (link_node*)malloc(sizeof(link_node));
+    new->name = value;
+    new->nextPtr = NULL;
+    link_node* current;
+    if (*ptr_homePtr == NULL) {
+        *ptr_homePtr = new;
+        return;
+    } else {
+        current = *ptr_homePtr;
+        while(current->nextPtr) {
+            current = current->nextPtr;
+        }
+        current->nextPtr = new;
+    }
+}
+
 void initialize_adjacencies(link_node* graph[26]) {
     city_name adjacencies[26][10] = {0};
     static int loop_num = 0;
@@ -402,11 +420,9 @@ void initialize_adjacencies(link_node* graph[26]) {
 
 
     for (int i = 0; i < 26; i++) {
-        printf("%c -", i+'a');
         for (int j = 0; j < 10; j++) {
-            printf("  %c", adjacencies[i][j]+'a');
+            insert(&graph[i], adjacencies[i][j]);
         }
-        puts("");
     }
 }
 int main() {
@@ -424,5 +440,15 @@ int main() {
 	srand(time(NULL));
 
     initialize_adjacencies(graph);
+
+    for(int i = 0; i < 26; i++) {
+        link_node *a = graph[i];
+        printf("%c: ", i+'a');
+        while(a) {
+            printf("- %c", a->name+'a');
+            a = a->nextPtr;
+        }
+        puts("");
+    }
 
 }
