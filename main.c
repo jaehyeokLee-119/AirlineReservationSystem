@@ -28,6 +28,7 @@ typedef struct stack_node {
 typedef struct rbt_node {
     color_t color;
     int rid;
+    char name[6];
     reservation_node* reservation;
     struct rbt_node *parent;
     struct rbt_node *left;
@@ -42,12 +43,16 @@ typedef struct Stack {
 
 rbt_node* nil;
 
-rbt_node* create_node(int key, reservation_node* reservation_path) {
+rbt_node* create_node(int key, reservation_node* reservation_path, char* name) {
     rbt_node* new = (rbt_node*) malloc(sizeof(rbt_node));
     
     new->color = RED;
     new->rid = key;
     new->reservation = reservation_path;
+    if (name != NULL) {
+        for(int i = 0; i < 6; i++) 
+            new->name[i] = name[i];
+    }
     new->parent = NULL;
     new->left = NULL;
     new->right = NULL;
@@ -308,7 +313,7 @@ void print_inorder(rbt_node* node) {
     printf("---------------------------------------------------------\n");
 }
 rbt_node* rbt_init() {
-    rbt_node* nil = create_node(-1, NULL);
+    rbt_node* nil = create_node(-1, NULL, NULL);
     nil->color = BLACK;
     return nil;
 }
@@ -589,8 +594,8 @@ void reservation_insert(reservation_node** ptr_homePtr, city_name value, int tim
 
 void print_reservation(reservation_node* reserv) {
     reservation_node* cur = reserv;
-    printf("print reservation start\n");
     printf("%c(%s, %d)", cur->name+'a', int_to_timeString(cur->time), cur->date);
+    cur = cur->nextPtr;
     while(cur) {
         printf("-%c(%s, %d)", cur->name+'a', int_to_timeString(cur->time), cur->date);
         cur = cur->nextPtr;
@@ -603,10 +608,10 @@ void stack_to_reservation(Stack* stack, reservation_node** reserv, int date) {
         if (cur->nextPtr != NULL) {
             reservation_insert(reserv, cur->name, cur->nextPtr->departure_time-60, date);
             cur = cur->nextPtr;
-        } 
-        else {
+        } else {
             reservation_insert(reserv, cur->name, cur->departure_time, date);
             cur = cur->nextPtr;
+            break;
         }
     }
 }
@@ -662,20 +667,14 @@ reservation_node* init_pathfinding(city_name src, city_name dst, int date, link_
     Stack* stack = InitStack();
     Stack* res_stack = InitStack();
     recursive_pathfinding(src, dst, time, stack, graph, schedule, res_stack);
-    printf("final path '%c'->'%c': ", src+'a', dst+'a');
     if (res_stack->found == 1) {
-        stack_traverse(res_stack);
+        //stack_traverse(res_stack);
         reservation_node* reserv = NULL;
-        printf("start stack to reservation list\n");
         stack_to_reservation(res_stack, &reserv, date);
-        if (reserv == NULL)
-            printf("reserv is NULL\n");
         // printf("reserv(city): %c\n", reserv->name+'a');
-        print_reservation(reserv);
-        puts("");
         return reserv;
     } else {
-        printf("no path\n");
+        return NULL;
     }
 
 
@@ -716,19 +715,6 @@ int main() {
     
 	srand(time(NULL));
     initialize_adjacencies(graph);
-
-    /* <adjacency list printing>
-    for(int i = 0; i < 26; i++) {
-        link_node *a = graph[i];
-        printf("%c: ", i+'a');
-        while(a) {
-            printf("- %c", a->name+'a');
-            a = a->nextPtr;
-        }
-        puts("");
-    }
-    */
-
     /* 
     flight paths are in 'graph[26][10]'
         every pathes from(to) 'i' to(from) 'j'
@@ -755,23 +741,6 @@ int main() {
         }
     }
 
-    // <Departure schedule Printing>
-    /*
-    for (int i = 0; i < 26; i++) {
-        printf("<%c>\n", i+'a');
-        for(int j = 0; j < 26; j++) {
-            int tmp = departure_schedule[i][j];
-            if (tmp != -1)
-                printf("<%c>: %s|", j+'a',int_to_timeString(tmp));
-            else
-                printf(" - |");
-        }
-        puts("");
-    }
-    */
-    
-
-
     // -------------- //
     // Execution Part //
     // -------------- //
@@ -789,21 +758,38 @@ int main() {
     */
     
     // print_adjacency_and_schedule(graph,departure_schedule);
-    printf("init_pathfinding start\n");
     reservation_node* reservation_path = NULL;
-    reservation_path = init_pathfinding('e'-'a', 'z'-'a', 31, graph, departure_schedule);
-    printf("init_pathfinding end, from (%c)\n", reservation_path->name+'a');
 
-    puts("");
-    printf("init_pathfinding start\n");
-    reservation_path = init_pathfinding('k'-'a', 'r'-'a', 31, graph, departure_schedule);
-    printf("init_pathfinding end, from (%c)\n", reservation_path->name+'a');
+    
+    rbt_node* n;
+    // insertion 10;
+    for(int i = 0; i < 10; i++) {
+        scanf("%c%c%c%c%c, %c, %c, %d", &r_name[0], &r_name[1], &r_name[2], &r_name[3], &r_name[4], &r_src, &r_dst, &r_date);
+        r_name[5] = '\0';
+        // printf("name: %s\nsrc: %c\ndst: %c\ndate: %d\n", r_name, r_src, r_dst, r_date);
 
-    puts("");
-    printf("init_pathfinding start\n");
-    reservation_path = init_pathfinding('f'-'a', 'e'-'a', 31, graph, departure_schedule);
-    printf("init_pathfinding end, from (%c)\n", reservation_path->name+'a');
+        reservation_path = init_pathfinding(r_src-'a', r_dst-'a', r_date, graph, departure_schedule);
+            // find path and store it in 'reservation_path'
 
+        if (reservation_path == NULL) {
+            printf("No path exists for that source, destination pair. Try again please\n");
+            i--;
+            continue;
+        }
+        n = create_node(reservation_num++, reservation_path, r_name);   
+            // make rbt_node 'n' with the path found
+
+        rbt_insert(&root, n);   // insert rbt_node to rbt tree 
+        printf("%s, %d, ", n->name, n->rid);
+        print_reservation(n->reservation);  // 
+        puts(""); 
+        print_inorder(root);
+        getchar();  // clearing buffer with popping out '\n' from the buffer
+    }
+    // deletion 10;
+    for(int i = 0; i < 5; i++) {
+
+    }
 
 
 }
