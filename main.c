@@ -11,6 +11,12 @@ typedef struct link_node {
 	struct link_node* nextPtr;
 }link_node;
 
+typedef struct stack_node {
+	city_name name;
+    int departure_time;
+	struct stack_node* nextPtr;
+}stack_node;
+
 typedef struct rbt_node {
     color_t color;
     int rid;
@@ -22,8 +28,8 @@ typedef struct rbt_node {
 } rbt_node;
 
 typedef struct Stack {
-    link_node* top;
-    int size;
+    stack_node* top;
+    int found;
 } Stack;
 
 
@@ -374,15 +380,16 @@ int graph_search(link_node* graph[26], city_name src, city_name dst) {
     }
     return 0;
 }
-void stack_push(Stack *s, city_name value) {
-    link_node* node_to_push = (link_node*) malloc (sizeof(link_node));
+void stack_push(Stack *s, city_name value, int time) {
+    stack_node* node_to_push = (stack_node*) malloc (sizeof(stack_node));
     if (node_to_push == NULL) return;
     node_to_push->name = value;
+    node_to_push->departure_time = time;
     node_to_push->nextPtr = s->top;
     s->top = node_to_push;
 }
 city_name stack_pop(Stack *s) {
-    link_node* node_to_pop = s->top;
+    stack_node* node_to_pop = s->top;
     if (node_to_pop == NULL) return -1;
 
     city_name data = node_to_pop->name;
@@ -390,11 +397,11 @@ city_name stack_pop(Stack *s) {
     free(node_to_pop);
     return data;
 }
-int traverse(Stack *s) {
-    link_node *curPos = s->top;
+int stack_traverse(Stack *s) {
+    stack_node *curPos = s->top;
 
     while (curPos) {
-        printf("%c ", 'a'+curPos->name);
+        printf("%c(%d) ", 'a'+curPos->name, curPos->departure_time);
         curPos = curPos->nextPtr;
     }
     printf("\n");
@@ -403,14 +410,14 @@ int traverse(Stack *s) {
 Stack *InitStack(void){
     Stack *stack = (Stack *)malloc(sizeof(Stack)); 
     stack->top = NULL;
-    stack->size = 0;
+    stack->found = 0;
     return stack;
 }
 city_name stack_top(Stack *s) {
     return s->top->name;
 }
 int stack_search(Stack *s, city_name name) {
-    link_node *curPos = s->top;
+    stack_node *curPos = s->top;
 
     while (curPos) {
         if (curPos->name == name) {
@@ -421,7 +428,28 @@ int stack_search(Stack *s, city_name name) {
     return 0;
 }
 
-
+void print_adjacency(link_node* graph[26]) {
+    for(int i = 0; i < 26; i++) {
+        link_node *a = graph[i];
+        printf("%c: ", i+'a');
+        while(a) {
+            printf("- %c", a->name+'a');
+            a = a->nextPtr;
+        }
+        puts("");
+    }
+}
+void print_adjacency_and_schedule(link_node* graph[26], int schedule[26][26]) {
+    for(int i = 0; i < 26; i++) {
+        link_node *a = graph[i];
+        printf("%c: ", i+'a');
+        while(a) {
+            printf("- %c(%d)", a->name+'a',schedule[i][a->name]);
+            a = a->nextPtr;
+        }
+        puts("");
+    }
+}
 
 void initialize_adjacencies(link_node* graph[26]) {
     city_name adjacencies[26][10] = {0};
@@ -518,10 +546,15 @@ void initialize_adjacencies(link_node* graph[26]) {
 }
 
 Stack* recursive_pathfinding(city_name src, city_name dst, int time, Stack* stack, link_node* graph[26], int schedule[26][26]) {
-    stack_push(stack, src);
+    stack_push(stack, src, time);
+    if (stack->found == 1) {
+        return NULL;
+    }
     if (stack_top(stack) == dst) {
-        printf("경로 찾음\n");
-        traverse(stack);
+        printf("path found\n");
+        stack_traverse(stack);
+        print_adjacency_and_schedule(graph,schedule);
+        stack->found = 1;
         return stack;
     } else {
         if (time < 1440) {
@@ -534,33 +567,34 @@ Stack* recursive_pathfinding(city_name src, city_name dst, int time, Stack* stac
                 if (current == NULL) break;
             }
 
+            int is_there_anywhere_to_go = 0;
             for(int i = 0; i < 10; i++) {
                 if (schedule[src][arrivals[i]] >= time) {
-                    if (!stack_search(stack, arrivals[i])){ // 같은 도시를 두번 방문하지는 않음
-                        if (recursive_pathfinding(arrivals[i], dst, time+60, stack, graph, schedule)) {
-                            return stack;
-                        }
+                    if (!stack_search(stack, arrivals[i])){ // select cities haven't visited
+                        recursive_pathfinding(arrivals[i], dst, schedule[src][arrivals[i]]+60, stack, graph, schedule);
+                        is_there_anywhere_to_go = 1;
                     }
                 }
+            }
+            if (is_there_anywhere_to_go == 0) {
+                stack_pop(stack);
+                return NULL;
             }
         } else {
             stack_pop(stack);
             return NULL;
         }
-        /*
-        stack_top(stack)을 출발지로 하는 모든 경로를 확인
-        모든 경로의 출발시간을 확인
-        출발시간이 time 이상인 경로에 대해서 recursive_pathfinding(src=경로목적지, time=time+60)을 수행
-        */
     }
     stack_pop(stack);
+    return NULL;
 }
+
 
 link_node* init_pathfinding(city_name src, city_name dst, link_node* graph[26], int schedule[26][26]) {
     int time = 0;
     Stack* stack = InitStack();
     recursive_pathfinding(src, dst, time, stack, graph, schedule);
-    // traverse(stack);
+    // stack_traverse(stack);
 
 }
 
@@ -644,7 +678,8 @@ int main() {
     char r_dst;
     int r_date;
 
-    // input 입력받기
+    // input
+    
     /*
     scanf("%c%c%c%c%c, %c, %c, %d", &r_name[0], &r_name[1], &r_name[2], &r_name[3], &r_name[4], &r_src, &r_dst, &r_date);
     r_name[5] = '\0';
@@ -654,8 +689,6 @@ int main() {
     printf("init_pathfinding start\n");
     init_pathfinding('e'-'a', 'z'-'a', graph, departure_schedule);
     printf("\ninit_pathfinding end\n");
-    // 비행스케쥴 상의 길찾기 알고리즘 (한 번의 이동에 1시간이 소요됨)
-    // 리턴하는 것은 도시 이름만 순서대로 리턴하면 시간은 채워넣으면 됨
 
 
 
