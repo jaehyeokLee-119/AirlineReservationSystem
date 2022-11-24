@@ -456,7 +456,7 @@ void print_adjacency_and_schedule(link_node* graph[26], int schedule[26][26]) {
         link_node *a = graph[i];
         printf("%c: ", i+'a');
         while(a) {
-            printf("- %c(%d)", a->name+'a',schedule[i][a->name]);
+            printf("- %c(%s)", a->name+'a', int_to_timeString(schedule[i][a->name]));
             a = a->nextPtr;
         }
         puts("");
@@ -676,27 +676,6 @@ reservation_node* init_pathfinding(city_name src, city_name dst, int date, link_
     } else {
         return NULL;
     }
-
-
-    
-    /*
-    rbt에 저장할 행렬 구현
-    현재 도착 시간으로 구현되어 있는데, 딱 출력만 하면 되도록 재구성하기
-
-    <from (current)>
-    각 도시에 도착한 시각 (출발지는 12:00am)
-
-    <to>
-    마지막을 제외한 경로: 도시에서 출발한 시각
-        > 현재 도시에서 다음 도시를 보고 출발시각 schedule을 보고 넣음
-    마지막: 마지막 도시에 도착한 시각
-
-
-
-    */
-
-    // stack_traverse(stack);
-
 }
 
 
@@ -705,14 +684,7 @@ int main() {
     nil = root;
 
     int reservation_num = 0;
-    /*
-    rbt_node* n = create_node(5);
-    rbt_insert(&root, n);
-    print_inorder(root);
-    */
-
 	link_node* graph[26] = {NULL};
-    
 	srand(time(NULL));
     initialize_adjacencies(graph);
     /* 
@@ -764,6 +736,7 @@ int main() {
     rbt_node* n;
     // insertion 10;
     for(int i = 0; i < 10; i++) {
+        printf("Enter form to reserve (name, source, destination, date)\n: ");
         scanf("%c%c%c%c%c, %c, %c, %d", &r_name[0], &r_name[1], &r_name[2], &r_name[3], &r_name[4], &r_src, &r_dst, &r_date);
         r_name[5] = '\0';
         // printf("name: %s\nsrc: %c\ndst: %c\ndate: %d\n", r_name, r_src, r_dst, r_date);
@@ -774,22 +747,40 @@ int main() {
         if (reservation_path == NULL) {
             printf("No path exists for that source, destination pair. Try again please\n");
             i--;
+            getchar(); 
             continue;
         }
         n = create_node(reservation_num++, reservation_path, r_name);   
             // make rbt_node 'n' with the path found
 
         rbt_insert(&root, n);   // insert rbt_node to rbt tree 
-        printf("%s, %d, ", n->name, n->rid);
-        print_reservation(n->reservation);  // 
+
+        // print output
+        printf("> %s, %d, ", n->name, n->rid);
+        print_reservation(n->reservation);  
         puts(""); 
+
+        // print red black tree
         print_inorder(root);
+        puts("");
         getchar();  // clearing buffer with popping out '\n' from the buffer
     }
-    // deletion 10;
-    for(int i = 0; i < 5; i++) {
+    printf("Start to delete\n");
 
+    // deletion 10;
+    int delkey;
+    for(int i = 0; i < 5; i++) {
+        printf("key to delete: ");
+        scanf("%d", &delkey);
+        printf("The reservation to delete: ");
+        rbt_node* to_delete = rbt_search(&root, delkey);
+        printf("%s, %d, ", to_delete->name, to_delete->rid);
+        print_reservation(to_delete->reservation);  // 
+        puts(""); 
+        rbt_delete(&root, to_delete);
+        print_inorder(root);
+        puts("");
     }
 
-
+    print_adjacency_and_schedule(graph,departure_schedule);
 }
