@@ -545,17 +545,25 @@ void initialize_adjacencies(link_node* graph[26]) {
     }
 }
 
-Stack* recursive_pathfinding(city_name src, city_name dst, int time, Stack* stack, link_node* graph[26], int schedule[26][26]) {
-    stack_push(stack, src, time);
+Stack* stack_copy(Stack* src, Stack* dst) {
+    stack_node* cur_tmp = src->top;
+    while(cur_tmp) {
+        stack_push(dst, cur_tmp->name, cur_tmp->departure_time);
+        cur_tmp = cur_tmp->nextPtr;
+    }
+}
+
+Stack* recursive_pathfinding(city_name src, city_name dst, int time, Stack* stack, link_node* graph[26], int schedule[26][26], Stack* res_stack) {
     if (stack->found == 1) {
         return NULL;
     }
+    stack_push(stack, src, time);
     if (stack_top(stack) == dst) {
-        printf("path found\n");
-        stack_traverse(stack);
-        print_adjacency_and_schedule(graph,schedule);
+        //printf("path found\n");
+        //stack_traverse(stack);
+        stack_copy(stack, res_stack);
         stack->found = 1;
-        return stack;
+        return NULL;
     } else {
         if (time < 1440) {
             city_name arrivals[10];       // arrivals[10]: all 10 arrivals that directly reachable from src(current location)
@@ -571,7 +579,7 @@ Stack* recursive_pathfinding(city_name src, city_name dst, int time, Stack* stac
             for(int i = 0; i < 10; i++) {
                 if (schedule[src][arrivals[i]] >= time) {
                     if (!stack_search(stack, arrivals[i])){ // select cities haven't visited
-                        recursive_pathfinding(arrivals[i], dst, schedule[src][arrivals[i]]+60, stack, graph, schedule);
+                        recursive_pathfinding(arrivals[i], dst, schedule[src][arrivals[i]]+60, stack, graph, schedule, res_stack);
                         is_there_anywhere_to_go = 1;
                     }
                 }
@@ -593,7 +601,10 @@ Stack* recursive_pathfinding(city_name src, city_name dst, int time, Stack* stac
 link_node* init_pathfinding(city_name src, city_name dst, link_node* graph[26], int schedule[26][26]) {
     int time = 0;
     Stack* stack = InitStack();
-    recursive_pathfinding(src, dst, time, stack, graph, schedule);
+    Stack* res_stack = InitStack();
+    recursive_pathfinding(src, dst, time, stack, graph, schedule, res_stack);
+    printf("final path '%c'→'%c': ", src+'a', dst+'a');
+    stack_traverse(res_stack);
     // stack_traverse(stack);
 
 }
@@ -686,11 +697,20 @@ int main() {
     printf("name: %s\nsrc: %c\ndst: %c\ndate: %d\n", r_name, r_src, r_dst, r_date);
     */
     
+    print_adjacency_and_schedule(graph,departure_schedule);
     printf("init_pathfinding start\n");
     init_pathfinding('e'-'a', 'z'-'a', graph, departure_schedule);
-    printf("\ninit_pathfinding end\n");
+    printf("init_pathfinding end\n");
 
+    puts("");
+    printf("init_pathfinding start\n");
+    init_pathfinding('k'-'a', 'r'-'a', graph, departure_schedule);
+    printf("init_pathfinding end\n");
 
+    puts("");
+    printf("init_pathfinding start\n");
+    init_pathfinding('f'-'a', 'e'-'a', graph, departure_schedule);
+    printf("init_pathfinding end\n");
 
 
 
