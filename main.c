@@ -11,6 +11,14 @@ typedef struct link_node {
 	struct link_node* nextPtr;
 }link_node;
 
+typedef struct reservation_node {
+	city_name name;
+    int time;
+    int date;
+	struct reservation_node* nextPtr;
+}reservation_node;
+
+
 typedef struct stack_node {
 	city_name name;
     int departure_time;
@@ -20,8 +28,7 @@ typedef struct stack_node {
 typedef struct rbt_node {
     color_t color;
     int rid;
-    link_node* paths;
-    int date;
+    reservation_node* reservation;
     struct rbt_node *parent;
     struct rbt_node *left;
     struct rbt_node *right;
@@ -35,11 +42,12 @@ typedef struct Stack {
 
 rbt_node* nil;
 
-rbt_node* create_node(int key) {
+rbt_node* create_node(int key, reservation_node* reservation_path) {
     rbt_node* new = (rbt_node*) malloc(sizeof(rbt_node));
     
     new->color = RED;
     new->rid = key;
+    new->reservation = reservation_path;
     new->parent = NULL;
     new->left = NULL;
     new->right = NULL;
@@ -300,7 +308,7 @@ void print_inorder(rbt_node* node) {
     printf("---------------------------------------------------------\n");
 }
 rbt_node* rbt_init() {
-    rbt_node* nil = create_node(-1);
+    rbt_node* nil = create_node(-1, NULL);
     nil->color = BLACK;
     return nil;
 }
@@ -450,6 +458,8 @@ void print_adjacency_and_schedule(link_node* graph[26], int schedule[26][26]) {
     }
 }
 
+
+
 void initialize_adjacencies(link_node* graph[26]) {
     city_name adjacencies[26][10] = {0};
     static int loop_num = 0;
@@ -552,6 +562,55 @@ Stack* stack_copy(Stack* src, Stack* dst) {
     }
 }
 
+void reservation_insert(reservation_node** ptr_homePtr, city_name value, int time, int date) {
+    reservation_node* new;
+    new = (reservation_node*)malloc(sizeof(reservation_node));
+    new->name = value;
+    new->time = time;
+    new->nextPtr = NULL;
+    new->date = date;
+    if (time >= 1440) { // when arrival time exceed 11:59pm
+        new->time -= 1440;
+        new->date = (new->date+1)%31;        // store next day
+    }
+    reservation_node* current;
+    if (*ptr_homePtr == NULL) {
+        *ptr_homePtr = new;
+        return;
+    } else {
+        current = *ptr_homePtr;
+        while(current->nextPtr) {
+            current = current->nextPtr;
+        }
+        current->nextPtr = new;
+    }
+}
+
+
+void print_reservation(reservation_node* reserv) {
+    reservation_node* cur = reserv;
+    printf("print reservation start\n");
+    printf("%c(%s, %d)", cur->name+'a', int_to_timeString(cur->time), cur->date);
+    while(cur) {
+        printf("-%c(%s, %d)", cur->name+'a', int_to_timeString(cur->time), cur->date);
+        cur = cur->nextPtr;
+    }
+}
+
+void stack_to_reservation(Stack* stack, reservation_node** reserv, int date) {
+    stack_node* cur = stack->top;
+    while(cur) {
+        if (cur->nextPtr != NULL) {
+            reservation_insert(reserv, cur->name, cur->nextPtr->departure_time-60, date);
+            cur = cur->nextPtr;
+        } 
+        else {
+            reservation_insert(reserv, cur->name, cur->departure_time, date);
+            cur = cur->nextPtr;
+        }
+    }
+}
+
 Stack* recursive_pathfinding(city_name src, city_name dst, int time, Stack* stack, link_node* graph[26], int schedule[26][26], Stack* res_stack) {
     if (stack->found == 1) {
         return NULL;
@@ -598,7 +657,7 @@ Stack* recursive_pathfinding(city_name src, city_name dst, int time, Stack* stac
 }
 
 
-link_node* init_pathfinding(city_name src, city_name dst, link_node* graph[26], int schedule[26][26]) {
+reservation_node* init_pathfinding(city_name src, city_name dst, int date, link_node* graph[26], int schedule[26][26]) {
     int time = 0;
     Stack* stack = InitStack();
     Stack* res_stack = InitStack();
@@ -606,13 +665,32 @@ link_node* init_pathfinding(city_name src, city_name dst, link_node* graph[26], 
     printf("final path '%c'->'%c': ", src+'a', dst+'a');
     if (res_stack->found == 1) {
         stack_traverse(res_stack);
+        reservation_node* reserv = NULL;
+        printf("start stack to reservation list\n");
+        stack_to_reservation(res_stack, &reserv, date);
+        if (reserv == NULL)
+            printf("reserv is NULL\n");
+        // printf("reserv(city): %c\n", reserv->name+'a');
+        print_reservation(reserv);
+        puts("");
+        return reserv;
     } else {
         printf("no path\n");
     }
 
+
+    
     /*
     rbt에 저장할 행렬 구현
+    현재 도착 시간으로 구현되어 있는데, 딱 출력만 하면 되도록 재구성하기
 
+    <from (current)>
+    각 도시에 도착한 시각 (출발지는 12:00am)
+
+    <to>
+    마지막을 제외한 경로: 도시에서 출발한 시각
+        > 현재 도시에서 다음 도시를 보고 출발시각 schedule을 보고 넣음
+    마지막: 마지막 도시에 도착한 시각
 
 
 
@@ -710,20 +788,21 @@ int main() {
     printf("name: %s\nsrc: %c\ndst: %c\ndate: %d\n", r_name, r_src, r_dst, r_date);
     */
     
-    print_adjacency_and_schedule(graph,departure_schedule);
+    // print_adjacency_and_schedule(graph,departure_schedule);
     printf("init_pathfinding start\n");
-    init_pathfinding('e'-'a', 'z'-'a', graph, departure_schedule);
-    printf("init_pathfinding end\n");
+    reservation_node* reservation_path = NULL;
+    reservation_path = init_pathfinding('e'-'a', 'z'-'a', 31, graph, departure_schedule);
+    printf("init_pathfinding end, from (%c)\n", reservation_path->name+'a');
 
     puts("");
     printf("init_pathfinding start\n");
-    init_pathfinding('k'-'a', 'r'-'a', graph, departure_schedule);
-    printf("init_pathfinding end\n");
+    reservation_path = init_pathfinding('k'-'a', 'r'-'a', 31, graph, departure_schedule);
+    printf("init_pathfinding end, from (%c)\n", reservation_path->name+'a');
 
     puts("");
     printf("init_pathfinding start\n");
-    init_pathfinding('f'-'a', 'e'-'a', graph, departure_schedule);
-    printf("init_pathfinding end\n");
+    reservation_path = init_pathfinding('f'-'a', 'e'-'a', 31, graph, departure_schedule);
+    printf("init_pathfinding end, from (%c)\n", reservation_path->name+'a');
 
 
 
