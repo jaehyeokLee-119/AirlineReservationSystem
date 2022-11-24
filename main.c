@@ -399,9 +399,8 @@ city_name stack_pop(Stack *s) {
 }
 int stack_traverse(Stack *s) {
     stack_node *curPos = s->top;
-
     while (curPos) {
-        printf("%c(%d) ", 'a'+curPos->name, curPos->departure_time);
+        printf("%c(%s) ", 'a'+curPos->name, int_to_timeString(curPos->departure_time));
         curPos = curPos->nextPtr;
     }
     printf("\n");
@@ -563,6 +562,7 @@ Stack* recursive_pathfinding(city_name src, city_name dst, int time, Stack* stac
         //stack_traverse(stack);
         stack_copy(stack, res_stack);
         stack->found = 1;
+        res_stack->found = 1;
         return NULL;
     } else {
         if (time < 1440) {
@@ -603,8 +603,21 @@ link_node* init_pathfinding(city_name src, city_name dst, link_node* graph[26], 
     Stack* stack = InitStack();
     Stack* res_stack = InitStack();
     recursive_pathfinding(src, dst, time, stack, graph, schedule, res_stack);
-    printf("final path '%c'â†’'%c': ", src+'a', dst+'a');
-    stack_traverse(res_stack);
+    printf("final path '%c'->'%c': ", src+'a', dst+'a');
+    if (res_stack->found == 1) {
+        stack_traverse(res_stack);
+    } else {
+        printf("no path\n");
+    }
+
+    /*
+    rbt¿¡ ÀúÀåÇÒ Çà·Ä ±¸Çö
+
+
+
+
+    */
+
     // stack_traverse(stack);
 
 }
