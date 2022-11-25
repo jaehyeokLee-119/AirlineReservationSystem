@@ -44,6 +44,7 @@ typedef struct rbt_node {
 
 rbt_node* nil;
 
+// RBT operation -----
 rbt_node* create_node(int key, reservation_node* reservation_path, char* name) {
     rbt_node* new = (rbt_node*) malloc(sizeof(rbt_node));
     
@@ -319,6 +320,10 @@ rbt_node* rbt_init() {
     return nil;
 }
 
+// ----- RBT operation
+
+
+
 char* int_to_timeString(int time) {
     // time [0~1439] to string (12:00am to 11:59pm)
     int hour = time/60;
@@ -362,6 +367,7 @@ char* int_to_timeString(int time) {
     return to_ret;
 }
 
+// Adjacency graph operation -----
 void adjacency_insert(link_node** ptr_homePtr, city_name value) {
     link_node* new;
     new = (link_node*)malloc(sizeof(link_node));
@@ -506,6 +512,9 @@ void initialize_adjacencies(link_node* graph[26]) {
     }
 }
 
+// ----- Adjacency graph operation 
+
+// Stack operation -----
 void stack_push(Stack *s, city_name value, int time) {
     stack_node* node_to_push = (stack_node*) malloc (sizeof(stack_node));
     if (node_to_push == NULL) return;
@@ -558,6 +567,10 @@ void stack_free(Stack* stack) {
     free(stack);
 }
 
+// ----- Stack operation 
+
+
+// Reservation list operation -----
 void reservation_insert(reservation_node** ptr_homePtr, city_name value, int time, int date) {
     reservation_node* new;
     new = (reservation_node*)malloc(sizeof(reservation_node));
@@ -604,6 +617,9 @@ void stack_to_reservation(Stack* stack, reservation_node** reserv, int date) {
     }
 }
 
+// ----- Reservation list operation 
+
+// Path finding -----
 Stack* recursive_pathfinding(city_name src, city_name dst, int time, Stack* stack, link_node* graph[26], int schedule[26][26], Stack* res_stack) {
     if (stack->found == 1) {
         return NULL;
@@ -666,6 +682,8 @@ reservation_node* init_pathfinding(city_name src, city_name dst, int date, link_
     }
 }
 
+// ----- Path finding
+
 int main() {
     rbt_node* root = rbt_init();
     nil = root;
@@ -675,21 +693,6 @@ int main() {
 	srand(time(NULL));
     initialize_adjacencies(graph);
 
-    /* 
-    flight paths are in 'graph[26][10]'
-        every pathes from(to) 'i' to(from) 'j'
-            graph['i'][0~9] = 'j'
-    
-    the depart time of each one-way path is stored in 
-        departure_schedule[i][j]
-        it means
-            the departure time from a city 'i' to a city 'j' is
-                departure_schedule[i][j]
-        it represents the departure time as an int number [0,1435], with the unit of minute (steps 5) 
-
-        if there is no flight schedule 'i' to 'j', departure_schedule[i][j] to be -1
-    */
-    
     // Creating Departure schedule 
     int departure_schedule[26][26] = {0};
     for (int i = 0; i < 26; i++) {
@@ -700,6 +703,21 @@ int main() {
                 departure_schedule[i][j] = -1;
         }
     }
+
+    /* 
+    flight paths are in 'graph[26][10]'
+        every pathes from(to) 'i' to(from) 'j'
+            graph['i'][0~9] = 'j'
+    
+    the depart time of each one-way path is stored in 
+        departure_schedule[i][j]
+        it means
+            the departure time from a city 'i' to a city 'j' is departure_schedule[i][j]
+        it represents the departure time as an int number [0,1435], with the unit of minute (steps 5) 
+
+        if there is no flight schedule 'i' to 'j', departure_schedule[i][j] to be -1
+    */
+    
 
     // -------------- //
     // Execution Part //
