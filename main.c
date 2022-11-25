@@ -359,11 +359,12 @@ char* int_to_timeString(int time) {
         start_point = 0;
     }
 
-    for(int i = 0; start_point < 7; i++) {
+    int i = 0;
+    for(i = 0; start_point < 7; i++) {
         to_ret[i] = input[start_point];
         start_point++;
     }
-    to_ret[start_point] = '\0';
+    to_ret[i] = '\0';
     return to_ret;
 }
 
