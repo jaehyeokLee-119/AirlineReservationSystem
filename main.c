@@ -713,7 +713,7 @@ int main() {
 
     rbt_node* n;
     // insertion 10;
-    for(int i = 0; i < 1; i++) {
+    for(int i = 0; i < 10; i++) {
         printf("Enter (name, source, destination, date) for reservation\n: ");
         scanf("%c%c%c%c%c, %c, %c, %d", &r_name[0], &r_name[1], &r_name[2], &r_name[3], &r_name[4], &r_src, &r_dst, &r_date);
         r_name[5] = '\0';
@@ -745,7 +745,7 @@ int main() {
 
     // deletion 5;
     int delkey;
-    for(int i = 0; i < 1; i++) {
+    for(int i = 0; i < 5; i++) {
         printf("Enter reservation number to delete: ");
         scanf("%d", &delkey);
 
