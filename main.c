@@ -456,7 +456,7 @@ void print_adjacency_and_schedule(link_node* graph[26], int schedule[26][26]) {
         link_node *a = graph[i];
         printf("%c: ", i+'a');
         while(a) {
-            printf("- %c(%s)", a->name+'a', int_to_timeString(schedule[i][a->name]));
+            printf("-%c(%s) ", a->name+'a', int_to_timeString(schedule[i][a->name]));
             a = a->nextPtr;
         }
         puts("");
@@ -591,6 +591,12 @@ void reservation_insert(reservation_node** ptr_homePtr, city_name value, int tim
     }
 }
 
+void stack_free(Stack* stack) {
+    while(stack->top) {
+        stack_pop(stack);
+    }
+    free(stack);
+}
 
 void print_reservation(reservation_node* reserv) {
     reservation_node* cur = reserv;
@@ -671,6 +677,8 @@ reservation_node* init_pathfinding(city_name src, city_name dst, int date, link_
         //stack_traverse(res_stack);
         reservation_node* reserv = NULL;
         stack_to_reservation(res_stack, &reserv, date);
+        stack_free(stack);
+        stack_free(res_stack);
         // printf("reserv(city): %c\n", reserv->name+'a');
         return reserv;
     } else {
@@ -735,8 +743,8 @@ int main() {
     
     rbt_node* n;
     // insertion 10;
-    for(int i = 0; i < 10; i++) {
-        printf("Enter form to reserve (name, source, destination, date)\n: ");
+    for(int i = 0; i < 1; i++) {
+        printf("Enter (name, source, destination, date) for reservation\n: ");
         scanf("%c%c%c%c%c, %c, %c, %d", &r_name[0], &r_name[1], &r_name[2], &r_name[3], &r_name[4], &r_src, &r_dst, &r_date);
         r_name[5] = '\0';
         // printf("name: %s\nsrc: %c\ndst: %c\ndate: %d\n", r_name, r_src, r_dst, r_date);
@@ -765,14 +773,13 @@ int main() {
         puts("");
         getchar();  // clearing buffer with popping out '\n' from the buffer
     }
-    printf("Start to delete\n");
 
-    // deletion 10;
+    // deletion 5;
     int delkey;
-    for(int i = 0; i < 5; i++) {
-        printf("key to delete: ");
+    for(int i = 0; i < 1; i++) {
+        printf("Enter reservation number to delete: ");
         scanf("%d", &delkey);
-        printf("The reservation to delete: ");
+        printf("Deleted reservation: ");
         rbt_node* to_delete = rbt_search(&root, delkey);
         printf("%s, %d, ", to_delete->name, to_delete->rid);
         print_reservation(to_delete->reservation);  // 
