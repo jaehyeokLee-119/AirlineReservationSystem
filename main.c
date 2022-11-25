@@ -781,5 +781,6 @@ int main() {
         puts("");
     }
 
+    // Print randomly generated adjacency list and flight schedule
     print_adjacency_and_schedule(graph,departure_schedule);
 }
