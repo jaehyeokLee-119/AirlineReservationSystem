@@ -3,14 +3,15 @@
 #include <time.h>
 
 typedef enum { RED, BLACK } color_t;
-
 typedef char city_name;
 
+// adjacency list node
 typedef struct link_node {
 	city_name name;
 	struct link_node* nextPtr;
 }link_node;
 
+// reservation information node
 typedef struct reservation_node {
 	city_name name;
     int time;
@@ -18,13 +19,19 @@ typedef struct reservation_node {
 	struct reservation_node* nextPtr;
 }reservation_node;
 
-
+// stack used for path finding  
 typedef struct stack_node {
 	city_name name;
     int departure_time;
 	struct stack_node* nextPtr;
 }stack_node;
 
+typedef struct Stack {
+    stack_node* top;
+    int found;
+} Stack;
+
+// red-black tree node
 typedef struct rbt_node {
     color_t color;
     int rid;
@@ -34,12 +41,6 @@ typedef struct rbt_node {
     struct rbt_node *left;
     struct rbt_node *right;
 } rbt_node;
-
-typedef struct Stack {
-    stack_node* top;
-    int found;
-} Stack;
-
 
 rbt_node* nil;
 
@@ -323,6 +324,7 @@ int alphabet_to_int(city_name alphabet) {
     return (int) (alphabet-'a');
 }
 char* int_to_timeString(int time) {
+    // time [0~1439] to string (12:00am to 11:59pm)
     int hour = time/60;
     int min = time%60;
     int is_pm = (hour/12);
@@ -381,7 +383,6 @@ void adjacency_insert(link_node** ptr_homePtr, city_name value) {
         current->nextPtr = new;
     }
 }
-
 int graph_search(link_node* graph[26], city_name src, city_name dst) {
     link_node *tmp = graph[src];
     while(tmp) {
@@ -393,44 +394,6 @@ int graph_search(link_node* graph[26], city_name src, city_name dst) {
     }
     return 0;
 }
-void stack_push(Stack *s, city_name value, int time) {
-    stack_node* node_to_push = (stack_node*) malloc (sizeof(stack_node));
-    if (node_to_push == NULL) return;
-    node_to_push->name = value;
-    node_to_push->departure_time = time;
-    node_to_push->nextPtr = s->top;
-    s->top = node_to_push;
-}
-city_name stack_pop(Stack *s) {
-    stack_node* node_to_pop = s->top;
-    if (node_to_pop == NULL) return -1;
-
-    city_name data = node_to_pop->name;
-    s->top = node_to_pop->nextPtr;
-    free(node_to_pop);
-    return data;
-}
-Stack *InitStack(void){
-    Stack *stack = (Stack *)malloc(sizeof(Stack)); 
-    stack->top = NULL;
-    stack->found = 0;
-    return stack;
-}
-city_name stack_top(Stack *s) {
-    return s->top->name;
-}
-int stack_search(Stack *s, city_name name) {
-    stack_node *curPos = s->top;
-
-    while (curPos) {
-        if (curPos->name == name) {
-            return 1;
-        }
-        curPos = curPos->nextPtr;
-    }
-    return 0;
-}
-
 void print_adjacency(link_node* graph[26]) {
     for(int i = 0; i < 26; i++) {
         link_node *a = graph[i];
@@ -453,9 +416,6 @@ void print_adjacency_and_schedule(link_node* graph[26], int schedule[26][26]) {
         puts("");
     }
 }
-
-
-
 void initialize_adjacencies(link_node* graph[26]) {
     city_name adjacencies[26][10] = {0};
     static int loop_num = 0;
@@ -550,12 +510,56 @@ void initialize_adjacencies(link_node* graph[26]) {
     }
 }
 
+void stack_push(Stack *s, city_name value, int time) {
+    stack_node* node_to_push = (stack_node*) malloc (sizeof(stack_node));
+    if (node_to_push == NULL) return;
+    node_to_push->name = value;
+    node_to_push->departure_time = time;
+    node_to_push->nextPtr = s->top;
+    s->top = node_to_push;
+}
+city_name stack_pop(Stack *s) {
+    stack_node* node_to_pop = s->top;
+    if (node_to_pop == NULL) return -1;
+
+    city_name data = node_to_pop->name;
+    s->top = node_to_pop->nextPtr;
+    free(node_to_pop);
+    return data;
+}
+Stack *InitStack(void){
+    Stack *stack = (Stack *)malloc(sizeof(Stack)); 
+    stack->top = NULL;
+    stack->found = 0;
+    return stack;
+}
+city_name stack_top(Stack *s) {
+    return s->top->name;
+}
+int stack_search(Stack *s, city_name name) {
+    // check whether the stack has a node whose name is 'name' 
+    stack_node *curPos = s->top;
+
+    while (curPos) {
+        if (curPos->name == name) {
+            return 1;
+        }
+        curPos = curPos->nextPtr;
+    }
+    return 0;
+}
 Stack* stack_copy(Stack* src, Stack* dst) {
     stack_node* cur_tmp = src->top;
     while(cur_tmp) {
         stack_push(dst, cur_tmp->name, cur_tmp->departure_time);
         cur_tmp = cur_tmp->nextPtr;
     }
+}
+void stack_free(Stack* stack) {
+    while(stack->top) {
+        stack_pop(stack);
+    }
+    free(stack);
 }
 
 void reservation_insert(reservation_node** ptr_homePtr, city_name value, int time, int date) {
@@ -581,14 +585,6 @@ void reservation_insert(reservation_node** ptr_homePtr, city_name value, int tim
         current->nextPtr = new;
     }
 }
-
-void stack_free(Stack* stack) {
-    while(stack->top) {
-        stack_pop(stack);
-    }
-    free(stack);
-}
-
 void print_reservation(reservation_node* reserv) {
     reservation_node* cur = reserv;
     printf("%c(%s, %d)", cur->name+'a', int_to_timeString(cur->time), cur->date);
@@ -598,7 +594,6 @@ void print_reservation(reservation_node* reserv) {
         cur = cur->nextPtr;
     }
 }
-
 void stack_to_reservation(Stack* stack, reservation_node** reserv, int date) {
     stack_node* cur = stack->top;
     while(cur) {
@@ -657,8 +652,6 @@ Stack* recursive_pathfinding(city_name src, city_name dst, int time, Stack* stac
     stack_pop(stack);
     return NULL;
 }
-
-
 reservation_node* init_pathfinding(city_name src, city_name dst, int date, link_node* graph[26], int schedule[26][26]) {
     int time = 0;
     Stack* stack = InitStack();
@@ -677,7 +670,6 @@ reservation_node* init_pathfinding(city_name src, city_name dst, int date, link_
     }
 }
 
-
 int main() {
     rbt_node* root = rbt_init();
     nil = root;
@@ -686,6 +678,7 @@ int main() {
 	link_node* graph[26] = {NULL};
 	srand(time(NULL));
     initialize_adjacencies(graph);
+
     /* 
     flight paths are in 'graph[26][10]'
         every pathes from(to) 'i' to(from) 'j'
@@ -720,38 +713,26 @@ int main() {
     char r_dst;
     int r_date;
 
-    // input
-    
-    /*
-    scanf("%c%c%c%c%c, %c, %c, %d", &r_name[0], &r_name[1], &r_name[2], &r_name[3], &r_name[4], &r_src, &r_dst, &r_date);
-    r_name[5] = '\0';
-    printf("name: %s\nsrc: %c\ndst: %c\ndate: %d\n", r_name, r_src, r_dst, r_date);
-    */
-    
-    // print_adjacency_and_schedule(graph,departure_schedule);
     reservation_node* reservation_path = NULL;
 
-    
     rbt_node* n;
     // insertion 10;
     for(int i = 0; i < 1; i++) {
         printf("Enter (name, source, destination, date) for reservation\n: ");
         scanf("%c%c%c%c%c, %c, %c, %d", &r_name[0], &r_name[1], &r_name[2], &r_name[3], &r_name[4], &r_src, &r_dst, &r_date);
         r_name[5] = '\0';
-        // printf("name: %s\nsrc: %c\ndst: %c\ndate: %d\n", r_name, r_src, r_dst, r_date);
-
+        
+        // find path and store it in 'reservation_path'
         reservation_path = init_pathfinding(r_src-'a', r_dst-'a', r_date, graph, departure_schedule);
-            // find path and store it in 'reservation_path'
-
-        if (reservation_path == NULL) {
+            
+        if (reservation_path == NULL) { // the case there is no path source to destination
             printf("No path exists for that source, destination pair. Try again please\n");
             i--;
             getchar(); 
             continue;
         }
-        n = create_node(reservation_num++, reservation_path, r_name);   
-            // make rbt_node 'n' with the path found
 
+        n = create_node(reservation_num++, reservation_path, r_name);  // make rbt_node 'n' with the path found
         rbt_insert(&root, n);   // insert rbt_node to rbt tree 
 
         // print output
@@ -762,6 +743,7 @@ int main() {
         // print red black tree
         print_rbt_inorder(root);
         puts("");
+
         getchar();  // clearing buffer with popping out '\n' from the buffer
     }
 
@@ -770,11 +752,15 @@ int main() {
     for(int i = 0; i < 1; i++) {
         printf("Enter reservation number to delete: ");
         scanf("%d", &delkey);
+
+        // print information of reservation to be deleted
         printf("Deleted reservation: ");
         rbt_node* to_delete = rbt_search(&root, delkey);
         printf("%s, %d, ", to_delete->name, to_delete->rid);
-        print_reservation(to_delete->reservation);  // 
+        print_reservation(to_delete->reservation);  
         puts(""); 
+
+        // delete rbt node and print
         rbt_delete(&root, to_delete);
         print_rbt_inorder(root);
         puts("");
