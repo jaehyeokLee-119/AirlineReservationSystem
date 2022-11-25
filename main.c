@@ -284,9 +284,9 @@ rbt_node* rbt_search(rbt_node** root, int val) {
         }
     }
 }
-void recurrent_print(rbt_node* node, int tabs) {
+void recurrent_print_rbt(rbt_node* node, int tabs) {
     if (node != nil) {
-        recurrent_print(node->right, tabs+1);
+        recurrent_print_rbt(node->right, tabs+1);
         for(int i = 0; i < tabs-1; i++) printf("%13s"," ");
         printf("    \033[0;30m%2d--\033[0m", node->parent->rid);
         if (node->color == RED) 
@@ -296,19 +296,19 @@ void recurrent_print(rbt_node* node, int tabs) {
             //printf("(B %2d) ", node->key);
             printf("\033[0;37m[%2d]\033[0m", node->rid);
         puts("");
-        recurrent_print(node->left, tabs+1);
+        recurrent_print_rbt(node->left, tabs+1);
     }
 }
-void print_inorder(rbt_node* node) {
+void print_rbt_inorder(rbt_node* node) {
     printf("---------------------------------------------------------\n");
     if (node != nil) {
-        recurrent_print(node->right, 1);
+        recurrent_print_rbt(node->right, 1);
         if (node->color == RED) 
             printf("\033[0;31m[%2d]\033[0m", node->rid);
         else 
             printf("[%2d]", node->rid);
         puts("");
-        recurrent_print(node->left, 1);
+        recurrent_print_rbt(node->left, 1);
     }
     printf("---------------------------------------------------------\n");
 }
@@ -410,15 +410,6 @@ city_name stack_pop(Stack *s) {
     free(node_to_pop);
     return data;
 }
-int stack_traverse(Stack *s) {
-    stack_node *curPos = s->top;
-    while (curPos) {
-        printf("%c(%s) ", 'a'+curPos->name, int_to_timeString(curPos->departure_time));
-        curPos = curPos->nextPtr;
-    }
-    printf("\n");
-    return 0;
-}
 Stack *InitStack(void){
     Stack *stack = (Stack *)malloc(sizeof(Stack)); 
     stack->top = NULL;
@@ -456,7 +447,7 @@ void print_adjacency_and_schedule(link_node* graph[26], int schedule[26][26]) {
         link_node *a = graph[i];
         printf("%c: ", i+'a');
         while(a) {
-            printf("-%c(%s) ", a->name+'a', int_to_timeString(schedule[i][a->name]));
+            printf("-%c(%7s) ", a->name+'a', int_to_timeString(schedule[i][a->name]));
             a = a->nextPtr;
         }
         puts("");
@@ -769,7 +760,7 @@ int main() {
         puts(""); 
 
         // print red black tree
-        print_inorder(root);
+        print_rbt_inorder(root);
         puts("");
         getchar();  // clearing buffer with popping out '\n' from the buffer
     }
@@ -785,7 +776,7 @@ int main() {
         print_reservation(to_delete->reservation);  // 
         puts(""); 
         rbt_delete(&root, to_delete);
-        print_inorder(root);
+        print_rbt_inorder(root);
         puts("");
     }
 
