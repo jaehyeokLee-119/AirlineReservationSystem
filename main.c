@@ -319,10 +319,6 @@ rbt_node* rbt_init() {
     return nil;
 }
 
-
-int alphabet_to_int(city_name alphabet) {
-    return (int) (alphabet-'a');
-}
 char* int_to_timeString(int time) {
     // time [0~1439] to string (12:00am to 11:59pm)
     int hour = time/60;
